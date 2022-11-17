@@ -2,18 +2,20 @@ from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, URL
 import csv
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
 Bootstrap(app)
 
+# Used to create form / form fields for add.html
+
 
 class CafeForm(FlaskForm):
     cafe = StringField('Cafe name', validators=[DataRequired()])
     location = StringField(
-        'Cafe Location on Google Maps (URL)', validators=[DataRequired()])
+        'Cafe Location on Google Maps (URL)', validators=[URL()])
     opening = StringField('Opening Time e.g. 8AM', validators=[DataRequired()])
     closing = StringField('Closing Time e.g. 5:30PM',
                           validators=[DataRequired()])
@@ -25,30 +27,25 @@ class CafeForm(FlaskForm):
         '0', '✘'), ('1', '🔌'), ('2', '🔌🔌'), ('3', '🔌🔌🔌'), ('4', '🔌🔌🔌🔌'), ('5', '🔌🔌🔌🔌🔌')])
     submit = SubmitField('Submit')
 
-# Exercise:
-# add: Location URL, open time, closing time, coffee rating, wifi rating, power outlet rating fields
-# make coffee/wifi/power a select element with choice of 0 to 5.
-# e.g. You could use emojis ☕️/💪/✘/🔌
-# make all fields required except submit
-# use a validator to check that the URL field has a URL entered.
-# ---------------------------------------------------------------------------
 
-
-# all Flask routes below
 @app.route("/")
 def home():
     return render_template("index.html")
 
+# Adds data from form to csv file
 
-@app.route('/add')
+
+@app.route('/add', methods=['GET', 'POST'])
 def add_cafe():
     form = CafeForm()
     if form.validate_on_submit():
-        print("True")
-    # Exercise:
-    # Make the form write a new row into cafe-data.csv
-    # with   if form.validate_on_submit()
+        with open('cafe-data.csv', 'a', newline='') as cafe_csv:
+            cafe_csv.write(
+                f'\n {form.cafe.data}, {form.location.data}, {form.opening.data}, {form.closing.data}, {form.rating.data}, {form.wifi.data}, {form.socket.data},')
+        return render_template('index.html')
     return render_template('add.html', form=form)
+
+# Populates cafe.html with data from csv file
 
 
 @app.route('/cafes')
